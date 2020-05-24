@@ -1,7 +1,7 @@
 # Function that extract the data for a given row before outputing some CSV.
 def generate_csv_row(project_id, csi_division, csi_sub_division, row_data):
     project_id = project_id
-    csi_number = csi_sub_division[0:8]  # first 6 digits of CIS SUB
+    csi_number = None  # csi_sub_division[0:8]  # first 6 digits of CIS SUB
     csi_division = csi_division
     csi_subdivision = csi_sub_division
     category = csi_division
