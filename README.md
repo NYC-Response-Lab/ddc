@@ -9,4 +9,4 @@ The main program can:
 * convert all the files into CSV (you can specify the destination)
 
 To convert all the file:
-`python excel_to_csv_main.py --url "***REMOVED***"  test`
+`python excel_to_csv_main.py --url <URL_FOR_ONE_DRIVE_FOLDER>  test`
