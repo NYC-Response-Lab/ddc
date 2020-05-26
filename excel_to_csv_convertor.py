@@ -1,7 +1,20 @@
-# Function that extract the data for a given row before outputing some CSV.
+import re
+
+CSI_NUMBER_PATTERN = re.compile('[^a-zA-Z]+')
+
+
+def get_csi_number(str):
+    # first 6-8 digits, e.g.
+    # - `23 05 93 Testing, Adjusting, and Balancing for HVAC`
+    # - `26 41 13.13 Lightning Protection for Buildings`
+    match = CSI_NUMBER_PATTERN.match(str)
+    return match.group().strip()
+
+
 def generate_csv_row(project_id, csi_division, csi_sub_division, row_data):
+    """Function that extracts the data for a given row before outputing some CSV."""
     project_id = project_id
-    csi_number = None  # csi_sub_division[0:8]  # first 6 digits of CIS SUB
+    csi_number = get_csi_number(csi_sub_division)
     csi_division = csi_division
     csi_subdivision = csi_sub_division
     category = csi_division
