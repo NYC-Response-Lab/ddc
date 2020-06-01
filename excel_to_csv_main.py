@@ -16,7 +16,7 @@ subparsers = parser.add_subparsers()
 # Command: test
 def test(args):
     print('running the command with for url: %s' % args.url)
-    SHEET = 'SampleProject2_02-17-2017_BidVarianceAnalysisDDC .xlsx'
+    SHEET = 'ddc-data/SampleProject4_11.24.2015_BidVarianceAnalysisDDC_SiteA.xlsx'
     data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
                          converters={'RSMeans 12-digit code': lambda x: str(x)}
                          ).fillna('')
@@ -69,6 +69,7 @@ def convert_all_files(args):
         args.folder), "folder %s does not exist. You must create it before running the command." % args.folder
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
+        print('Processing %s ...' % blob['name'])
         stream = container.download_blob(blob)
         excel_file = io.BytesIO(stream.readall())
         data = pd.read_excel(excel_file, sheet_name=0,

@@ -4,6 +4,8 @@ CSI_NUMBER_PATTERN = re.compile('[^a-zA-Z]+')
 
 
 def get_csi_number(str):
+    if str is None or str == "":
+        return ""
     # first 6-8 digits, e.g.
     # - `23 05 93 Testing, Adjusting, and Balancing for HVAC`
     # - `26 41 13.13 Lightning Protection for Buildings`
