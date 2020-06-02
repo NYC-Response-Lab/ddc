@@ -106,8 +106,6 @@ def process_excel_file_as_pd(data, project_id):
             csv_row = generate_csv_row(
                 project_id, current_CSI_DIVISION, current_CSI_SUB_DIVISION, row)
             output_rows.append(csv_row)
-        else:
-            print('We skip it > %d %s %s < ' % (i, description_of_work, quant))
 
         i = i + 1  # We go to the next row.
     return output_rows

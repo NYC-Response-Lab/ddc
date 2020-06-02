@@ -20,13 +20,15 @@ def test(args):
     data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
                          converters={'RSMeans 12-digit code': lambda x: str(x)}
                          ).fillna('')
-    print(data.columns)
     csv_rows = convertor.process_excel_file_as_pd(data, 'PROJECT_ID')
 
-    with open('test.csv', 'w') as csvfile:
-        row_writer = csv.writer(csvfile)
-        for row in csv_rows:
-            row_writer.writerow(row)
+    try:
+        with open('test.csv', 'w') as csvfile:
+            row_writer = csv.writer(csvfile)
+            for row in csv_rows:
+                row_writer.writerow(row)
+    except Exception:
+        print('Error writing csv')
 
 
 test_cmd = subparsers.add_parser('test')
@@ -87,10 +89,14 @@ def convert_all_files(args):
 
         filename = os.path.join(args.folder, ".".join(
             blob['name'].split('.')[:-1] + ['csv']))
-        with open(filename, 'w') as csvfile:
-            row_writer = csv.writer(csvfile)
-            for row in csv_rows:
-                row_writer.writerow(row)
+
+        try:
+            with open(filename, 'w') as csvfile:
+                row_writer = csv.writer(csvfile)
+                for row in csv_rows:
+                    row_writer.writerow(row)
+        except Exception:
+            print('Error writing file to csv')
 
 
 convert_all_files_cmd = subparsers.add_parser('convert_all')
