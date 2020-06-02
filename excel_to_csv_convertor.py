@@ -13,7 +13,11 @@ def get_csi_number(str):
     return match.group().strip()
 
 
-def generate_csv_row(project_id, csi_division, csi_sub_division, row_data):
+def _float(s):
+    return float(s) if s else 0.0
+
+
+def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_data):
     """Function that extracts the data for a given row before outputing some CSV."""
     project_id = project_id
     csi_number = get_csi_number(csi_sub_division)
@@ -22,45 +26,70 @@ def generate_csv_row(project_id, csi_division, csi_sub_division, row_data):
     category = csi_division
     subcategory = csi_subdivision
     item_code = row_data['RSMeans 12-digit code']
-    activity = None
-    ddc_qty = row_data['QUANT']
+    activity = row_data['DESCRIPTION OF WORK']
+    ddc_qty = _float(row_data['QUANT'])
     ddc_unit = row_data['UNIT']
-    ddc_material_cost = row_data['TOTAL MAT. $:']
-    ddc_labor_cost = row_data['TOTAL LABOR $:']
+    ddc_material_cost = _float(row_data['TOTAL MAT. $:'])
+    ddc_labor_cost = _float(row_data['TOTAL LABOR $:'])
     # extra space for the column name. Typo?
-    ddc_equipment_cost = row_data['TOTAL  EQUIP $:']
-    ddc_markup = None  # recompute in Python
-    ddc_unit_cost = None  # recompute in Python
-    ddc_avg_unit_price = None  # recompute in Python
-    ddc_extended_total_cost = None  # recompute in Python
-    bid1_qty = row_data['QUANT.1']
+    ddc_equipment_cost = _float(row_data['TOTAL  EQUIP $:'])
+    ddc_markup = (ddc_material_cost + ddc_labor_cost +
+                  ddc_equipment_cost) * markup
+    ddc_unit_cost = (ddc_material_cost + ddc_labor_cost +
+                     ddc_equipment_cost + ddc_markup) / ddc_qty if ddc_qty > 0 else ''
+    ddc_avg_unit_price = None  # MUST BE COMPUTED AT THE END.
+    ddc_extended_total_cost = ddc_qty * ddc_unit_cost if ddc_qty > 0 else ''
+    bid1_qty = _float(row_data['QUANT.1'])
     bid1_unit = row_data['UNIT COST.1']
-    bid1_material_cost = row_data['TOTAL MAT. $:.1']
-    bid1_labor_cost = row_data['TOTAL LABOR $:.1']
-    bid1_equipment_cost = row_data['TOTAL  EQUIP $:.1']
-    bid1_unit_cost = None  # recompute in Python
-    bid1_ext_total_cost = None  # recompute in Python
-    bid1_variance = None  # -- recompute in Python
-    bid2_qty = row_data['QUANT.2']
-    bid2_unit = row_data['UNIT COST.2']
-    bid2_material_cost = row_data['TOTAL MAT. $:.2']
-    bid2_labor_cost = row_data['TOTAL LABOR $:.2']
-    bid2_equipment_cost = row_data['TOTAL  EQUIP $:.2']
-    bid2_unit_cost = None  # recompute in Python
-    bid2_ext_total_cost = None  # recompute in Python
-    bid2_variance = None  # -- recompute in Python
-    bid3_qty = row_data['QUANT.3']
-    bid3_unit = row_data['UNIT COST.3']
-    bid3_material_cost = row_data['TOTAL MAT. $:.3']
-    bid3_labor_cost = row_data['TOTAL LABOR $:.3']
-    bid3_equipment_cost = row_data['TOTAL  EQUIP $:.3']
-    bid3_unit_cost = None  # recompute in Python
-    bid3_ext_total_cost = None  # recompute in Python
-    bid3_variance = None  # -- recompute in Python
+    bid1_material_cost = _float(row_data['TOTAL MAT. $:.1'])
+    bid1_labor_cost = _float(row_data['TOTAL LABOR $:.1'])
+    bid1_equipment_cost = _float(row_data['TOTAL  EQUIP $:.1'])
+    bid1_unit_cost = (bid1_material_cost + bid1_labor_cost +
+                      bid1_equipment_cost) / bid1_qty if bid1_qty > 0 else ''
+    bid1_ext_total_cost = bid1_qty * bid1_unit_cost if bid1_qty > 0 else ''
+    bid1_variance = ''
+    try:
+        bid1_variance = (bid1_ext_total_cost -
+                         ddc_extended_total_cost) / ddc_extended_total_cost
+    except Exception:
+        pass
 
-    # Now that we have all the values, we recompute some of them.
-    # TODO: add all of them
-    #ddc_avg_unit_price = (bid1_unit_cost + bid2_unit_cost + bid3_unit_cost) * 1/3
+    bid2_qty = _float(row_data['QUANT.2'])
+    bid2_unit = row_data['UNIT COST.2']
+    bid2_material_cost = _float(row_data['TOTAL MAT. $:.2'])
+    bid2_labor_cost = _float(row_data['TOTAL LABOR $:.2'])
+    bid2_equipment_cost = _float(row_data['TOTAL  EQUIP $:.2'])
+    bid2_unit_cost = (bid2_material_cost + bid2_labor_cost +
+                      bid2_equipment_cost) / bid2_qty if bid2_qty > 0 else ''
+    bid2_ext_total_cost = bid2_qty * bid2_unit_cost if bid2_qty else ''
+    bid2_variance = ''
+    try:
+        bid2_variance = (bid2_ext_total_cost -
+                         ddc_extended_total_cost) / ddc_extended_total_cost
+    except Exception:
+        pass
+
+    bid3_qty = _float(row_data['QUANT.3'])
+    bid3_unit = row_data['UNIT COST.3']
+    bid3_material_cost = _float(row_data['TOTAL MAT. $:.3'])
+    bid3_labor_cost = _float(row_data['TOTAL LABOR $:.3'])
+    bid3_equipment_cost = _float(row_data['TOTAL  EQUIP $:.3'])
+    bid3_unit_cost = (bid3_material_cost + bid3_labor_cost +
+                      bid3_equipment_cost) / bid3_qty if bid3_qty > 0 else ''
+    bid3_ext_total_cost = bid3_qty * bid3_unit_cost if bid3_unit_cost != '' else ''
+    bid3_variance = ''
+    try:
+        bid3_variance = (bid3_ext_total_cost -
+                         ddc_extended_total_cost) / ddc_extended_total_cost
+    except Exception:
+        pass
+
+    try:
+        ddc_avg_unit_price = 1.0/3 * \
+            (bid1_unit_cost + bid2_unit_cost + bid3_unit_cost)
+    except Exception:
+        ddc_avg_unit_price = ''
+
     csv_row = (project_id, csi_number, csi_division, csi_subdivision, category, subcategory, item_code, activity, ddc_qty, ddc_unit, ddc_material_cost, ddc_labor_cost, ddc_equipment_cost, ddc_markup, ddc_unit_cost, ddc_avg_unit_price, ddc_extended_total_cost, bid1_qty, bid1_unit, bid1_material_cost, bid1_labor_cost, bid1_equipment_cost,
                bid1_unit_cost, bid1_ext_total_cost, bid1_variance, bid2_qty, bid2_unit, bid2_material_cost, bid2_labor_cost, bid2_equipment_cost, bid2_unit_cost, bid2_ext_total_cost, bid2_variance, bid3_qty, bid3_unit, bid3_material_cost, bid3_labor_cost, bid3_equipment_cost, bid3_unit_cost, bid3_ext_total_cost, bid3_variance)
     return csv_row
@@ -72,6 +101,7 @@ def process_excel_file_as_pd(data, project_id):
     # We know we expect 48 divisions.
     # We know that "insert row above" marks the end of a division.
 
+    markup = float(data.iloc[0]['MARK-UP'])
     output_rows = []
     current_CSI_DIVISION = None
     current_CSI_SUB_DIVISION = None
@@ -104,7 +134,7 @@ def process_excel_file_as_pd(data, project_id):
         if description_of_work is not '' or (quant not in ['', 'SUB TOTAL']):
             # A row with a non-empty `DESCRIPTION OF WORK` or a `QUANT` value not 'SUB TOTAL' contains valid data ==> CSV.
             csv_row = generate_csv_row(
-                project_id, current_CSI_DIVISION, current_CSI_SUB_DIVISION, row)
+                project_id, markup, current_CSI_DIVISION, current_CSI_SUB_DIVISION, row)
             output_rows.append(csv_row)
 
         i = i + 1  # We go to the next row.

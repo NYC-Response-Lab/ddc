@@ -17,6 +17,7 @@ subparsers = parser.add_subparsers()
 def test(args):
     print('running the command with for url: %s' % args.url)
     SHEET = 'ddc-data/SampleProject2_02-17-2017_BidVarianceAnalysisDDC.xlsx'
+    #SHEET = 'SampleProject7_07-12-2019_BidVarianceAnalysisDDC.xlsx'
     data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
                          converters={'RSMeans 12-digit code': lambda x: str(x)}
                          ).fillna('')
