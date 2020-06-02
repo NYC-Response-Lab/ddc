@@ -88,8 +88,7 @@ def process_excel_file_as_pd(data, project_id):
 
         if csi_sub_div != '':
             current_CSI_SUB_DIVISION = csi_sub_div
-            i = i + 1
-            # continue  # rows with SUB DIVISION info don't contain data.
+            # some SUB DIVISION contain data.
 
         if csi_div == 'Insert row above':
             if current_CSI_DIVISION is not None and current_CSI_DIVISION.startswith('DIVISION 48'):
@@ -102,11 +101,13 @@ def process_excel_file_as_pd(data, project_id):
 
         description_of_work = row['DESCRIPTION OF WORK']
         quant = row['QUANT']
-        if description_of_work is not '' or quant is not '':
-            # A row with a non-empty `DESCRIPTION OF WORK` or `QUANT` contains valid data ==> CSV.
+        if description_of_work is not '' or (quant not in ['', 'SUB TOTAL']):
+            # A row with a non-empty `DESCRIPTION OF WORK` or a `QUANT` value not 'SUB TOTAL' contains valid data ==> CSV.
             csv_row = generate_csv_row(
                 project_id, current_CSI_DIVISION, current_CSI_SUB_DIVISION, row)
             output_rows.append(csv_row)
+        else:
+            print('We skip it > %d %s %s < ' % (i, description_of_work, quant))
 
         i = i + 1  # We go to the next row.
     return output_rows
