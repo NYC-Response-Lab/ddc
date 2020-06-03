@@ -6,14 +6,25 @@ import pandas as pd
 import io
 import csv
 import excel_to_csv_convertor as convertor
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(sys.stderr)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', type=str)
 subparsers = parser.add_subparsers()
 
-
 # Command: test
+
+
 def test(args):
     print('running the command with for url: %s' % args.url)
     SHEET = 'ddc-data/SampleProject2_02-17-2017_BidVarianceAnalysisDDC.xlsx'
@@ -40,6 +51,7 @@ test_cmd.set_defaults(func=test)
 # Command: list_files
 def list_files(args):
     container = ContainerClient.from_container_url(args.url)
+    logger.info('Listing files from %s.' % args.url)
     for blob in container.list_blobs():
         print(blob['name'])
 
@@ -54,12 +66,13 @@ def download_locally(args):
         args.folder), "folder %s does not exist. You must create it before running the command." % args.folder
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
+        logger.info('Processing file %s.' % blob['name'])
         filename = os.path.join(args.folder, blob['name'])
         with open(filename, "wb") as my_blob:
             stream = container.download_blob(blob)
             data = stream.readall()
             my_blob.write(data)
-            # TODO: add logging
+            logger.info('File saved as %s.' % filename)
 
 
 download_locally_cmd = subparsers.add_parser('download_locally')
@@ -74,15 +87,15 @@ def convert_all_files(args):
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
         try:
-            print('Processing %s ...' % blob['name'])
+            logger.info('Processing %s ...' % blob['name'])
             stream = container.download_blob(blob)
             excel_file = io.BytesIO(stream.readall())
             data = pd.read_excel(excel_file, sheet_name=0,
                                  header=None, nrows=1).fillna('')
             project_id = data[4][0]
             if project_id == '':
-                print('ERROR processing file %s.\n Cannot find project_id.' %
-                      blob['name'])
+                logger.error('Cannot find project_id for `%s`.' %
+                             blob['name'])
                 continue
             data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
                                  converters={
@@ -94,15 +107,16 @@ def convert_all_files(args):
             filename = os.path.join(args.folder, ".".join(
                 blob['name'].split('.')[:-1] + ['csv']))
 
+            logger.info('Writing to csv.')
             try:
                 with open(filename, 'w') as csvfile:
                     row_writer = csv.writer(csvfile)
                     for row in csv_rows:
                         row_writer.writerow(row)
             except Exception:
-                print('Error writing file to csv')
+                logger.error('Error writing file `%s` to csv' % blob['name'])
         except Exception:
-            print('Problem with file %s.' % blob['name'])
+            logger.error('Problem with file %s.' % blob['name'])
 
 
 convert_all_files_cmd = subparsers.add_parser('convert_all')
@@ -115,6 +129,7 @@ def check_unique(args):
     print('checking that each doc has a unique id')
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
+        logger.info('Processing file `%s`.' % blob['name'])
         stream = container.download_blob(blob)
         excel_file = io.BytesIO(stream.readall())
         data = pd.read_excel(excel_file, sheet_name=0, header=None, nrows=1)
