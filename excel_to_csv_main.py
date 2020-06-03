@@ -18,6 +18,7 @@ def test(args):
     print('running the command with for url: %s' % args.url)
     SHEET = 'ddc-data/SampleProject2_02-17-2017_BidVarianceAnalysisDDC.xlsx'
     #SHEET = 'SampleProject7_07-12-2019_BidVarianceAnalysisDDC.xlsx'
+    SHEET = 'SampleProject8_12-21-2017_BidVarianceAnalysisDDC.xlsx'
     data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
                          converters={'RSMeans 12-digit code': lambda x: str(x)}
                          ).fillna('')
@@ -72,32 +73,36 @@ def convert_all_files(args):
         args.folder), "folder %s does not exist. You must create it before running the command." % args.folder
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
-        print('Processing %s ...' % blob['name'])
-        stream = container.download_blob(blob)
-        excel_file = io.BytesIO(stream.readall())
-        data = pd.read_excel(excel_file, sheet_name=0,
-                             header=None, nrows=1).fillna('')
-        project_id = data[4][0]
-        if project_id == '':
-            print('ERROR processing file %s.' % blob['name'])
-            continue
-        data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
-                             converters={
-                                 'RSMeans 12-digit code': lambda x: str(x)}
-                             ).fillna('')
-
-        csv_rows = convertor.process_excel_file_as_pd(data, project_id)
-
-        filename = os.path.join(args.folder, ".".join(
-            blob['name'].split('.')[:-1] + ['csv']))
-
         try:
-            with open(filename, 'w') as csvfile:
-                row_writer = csv.writer(csvfile)
-                for row in csv_rows:
-                    row_writer.writerow(row)
+            print('Processing %s ...' % blob['name'])
+            stream = container.download_blob(blob)
+            excel_file = io.BytesIO(stream.readall())
+            data = pd.read_excel(excel_file, sheet_name=0,
+                                 header=None, nrows=1).fillna('')
+            project_id = data[4][0]
+            if project_id == '':
+                print('ERROR processing file %s.\n Cannot find project_id.' %
+                      blob['name'])
+                continue
+            data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
+                                 converters={
+                                     'RSMeans 12-digit code': lambda x: str(x)}
+                                 ).fillna('')
+
+            csv_rows = convertor.process_excel_file_as_pd(data, project_id)
+
+            filename = os.path.join(args.folder, ".".join(
+                blob['name'].split('.')[:-1] + ['csv']))
+
+            try:
+                with open(filename, 'w') as csvfile:
+                    row_writer = csv.writer(csvfile)
+                    for row in csv_rows:
+                        row_writer.writerow(row)
+            except Exception:
+                print('Error writing file to csv')
         except Exception:
-            print('Error writing file to csv')
+            print('Problem with file %s.' % blob['name'])
 
 
 convert_all_files_cmd = subparsers.add_parser('convert_all')

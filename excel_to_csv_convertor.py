@@ -14,7 +14,10 @@ def get_csi_number(str):
 
 
 def _float(s):
-    return float(s) if s else 0.0
+    try:
+        return float(s)
+    except Exception:
+        return 0.0
 
 
 def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_data):
@@ -39,6 +42,7 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
                      ddc_equipment_cost + ddc_markup) / ddc_qty if ddc_qty > 0 else ''
     ddc_avg_unit_price = None  # MUST BE COMPUTED AT THE END.
     ddc_extended_total_cost = ddc_qty * ddc_unit_cost if ddc_qty > 0 else ''
+
     bid1_qty = _float(row_data['QUANT.1'])
     bid1_unit = row_data['UNIT COST.1']
     bid1_material_cost = _float(row_data['TOTAL MAT. $:.1'])
@@ -46,7 +50,7 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
     bid1_equipment_cost = _float(row_data['TOTAL  EQUIP $:.1'])
     bid1_unit_cost = (bid1_material_cost + bid1_labor_cost +
                       bid1_equipment_cost) / bid1_qty if bid1_qty > 0 else ''
-    bid1_ext_total_cost = bid1_qty * bid1_unit_cost if bid1_qty > 0 else ''
+    bid1_ext_total_cost = bid1_qty * bid1_unit_cost if bid1_unit_cost != '' else ''
     bid1_variance = ''
     try:
         bid1_variance = (bid1_ext_total_cost -
@@ -61,7 +65,7 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
     bid2_equipment_cost = _float(row_data['TOTAL  EQUIP $:.2'])
     bid2_unit_cost = (bid2_material_cost + bid2_labor_cost +
                       bid2_equipment_cost) / bid2_qty if bid2_qty > 0 else ''
-    bid2_ext_total_cost = bid2_qty * bid2_unit_cost if bid2_qty else ''
+    bid2_ext_total_cost = bid2_qty * bid2_unit_cost if bid2_unit_cost != '' else ''
     bid2_variance = ''
     try:
         bid2_variance = (bid2_ext_total_cost -
