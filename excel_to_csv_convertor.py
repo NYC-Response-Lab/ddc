@@ -1,6 +1,18 @@
 import re
+import logging
+import sys
 
 CSI_NUMBER_PATTERN = re.compile('[^a-zA-Z]+')
+
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(sys.stderr)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
+logger.disabled = True
 
 
 def get_csi_number(str):
@@ -53,9 +65,10 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
     bid1_ext_total_cost = bid1_qty * bid1_unit_cost if bid1_unit_cost != '' else ''
     bid1_variance = ''
     try:
-        bid1_variance = (bid1_ext_total_cost -
-                         ddc_extended_total_cost) / ddc_extended_total_cost
+        bid1_variance = (_float(bid1_ext_total_cost) -
+                         _float(ddc_extended_total_cost)) / _float(ddc_extended_total_cost)
     except Exception:
+        logger.error('Error computing bid1_variance')
         pass
 
     bid2_qty = _float(row_data['QUANT.2'])
@@ -68,9 +81,10 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
     bid2_ext_total_cost = bid2_qty * bid2_unit_cost if bid2_unit_cost != '' else ''
     bid2_variance = ''
     try:
-        bid2_variance = (bid2_ext_total_cost -
-                         ddc_extended_total_cost) / ddc_extended_total_cost
+        bid2_variance = (_float(bid2_ext_total_cost) -
+                         _float(ddc_extended_total_cost)) / _float(ddc_extended_total_cost)
     except Exception:
+        logger.error('Error computing bid2_variance')
         pass
 
     bid3_qty = _float(row_data['QUANT.3'])
@@ -83,15 +97,18 @@ def generate_csv_row(project_id, markup, csi_division, csi_sub_division, row_dat
     bid3_ext_total_cost = bid3_qty * bid3_unit_cost if bid3_unit_cost != '' else ''
     bid3_variance = ''
     try:
-        bid3_variance = (bid3_ext_total_cost -
-                         ddc_extended_total_cost) / ddc_extended_total_cost
+        bid3_variance = (_float(bid3_ext_total_cost) -
+                         _float(ddc_extended_total_cost)) / _float(ddc_extended_total_cost)
     except Exception:
+        logger.error('Error computing bid3_variance')
         pass
 
     try:
         ddc_avg_unit_price = 1.0/3 * \
-            (bid1_unit_cost + bid2_unit_cost + bid3_unit_cost)
+            (_float(bid1_unit_cost) + _float(bid2_unit_cost) + _float(bid3_unit_cost))
+        logger.info(ddc_avg_unit_price)
     except Exception:
+        logger.error('Error computing ddc_avg_unit_price')
         ddc_avg_unit_price = ''
 
     csv_row = (project_id, csi_number, csi_division, csi_subdivision, category, subcategory, item_code, activity, ddc_qty, ddc_unit, ddc_material_cost, ddc_labor_cost, ddc_equipment_cost, ddc_markup, ddc_unit_cost, ddc_avg_unit_price, ddc_extended_total_cost, bid1_qty, bid1_unit, bid1_material_cost, bid1_labor_cost, bid1_equipment_cost,

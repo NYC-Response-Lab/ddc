@@ -47,8 +47,9 @@ def test(args):
 test_cmd = subparsers.add_parser('test')
 test_cmd.set_defaults(func=test)
 
-
 # Command: list_files
+
+
 def list_files(args):
     container = ContainerClient.from_container_url(args.url)
     logger.info('Listing files from %s.' % args.url)
@@ -84,6 +85,7 @@ download_locally_cmd.set_defaults(func=download_locally)
 def convert_all_files(args):
     assert os.path.isdir(
         args.folder), "folder %s does not exist. You must create it before running the command." % args.folder
+    ERRORS = []
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
         try:
@@ -96,6 +98,7 @@ def convert_all_files(args):
             if project_id == '':
                 logger.error('Cannot find project_id for `%s`.' %
                              blob['name'])
+                ERRORS.append(blob['name'])
                 continue
             data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
                                  converters={
@@ -115,8 +118,11 @@ def convert_all_files(args):
                         row_writer.writerow(row)
             except Exception:
                 logger.error('Error writing file `%s` to csv' % blob['name'])
+                ERRORS.append(blob['name'])
         except Exception:
             logger.error('Problem with file %s.' % blob['name'])
+            ERRORS.append(blob['name'])
+    print('Files that could not be processed: %s.' % ",".join(ERRORS))
 
 
 convert_all_files_cmd = subparsers.add_parser('convert_all')
