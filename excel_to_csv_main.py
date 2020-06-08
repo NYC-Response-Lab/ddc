@@ -107,10 +107,10 @@ def convert_all_files(args):
             bid_date = data[4][1]
             bid_comparison_date = data[4][2]
             project_name = data[4][3]
-            ddc_engineer_estimate = None
-            first_bidder = None
-            second_bidder = None
-            third_bidder = None
+            ddc_engineer_estimate = data[9][0]
+            first_bidder = data[9][1]
+            second_bidder = data[9][2]
+            third_bidder = data[9][3]
 
             METADATA_ROWS.append([project_id, project_name, bid_date,
                                   bid_comparison_date, ddc_engineer_estimate, first_bidder, second_bidder, third_bidder])
