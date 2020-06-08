@@ -28,7 +28,7 @@ subparsers = parser.add_subparsers()
 def test(args):
     print('running the command with for url: %s' % args.url)
     SHEET = 'ddc-data/SampleProject2_02-17-2017_BidVarianceAnalysisDDC.xlsx'
-    #SHEET = 'SampleProject7_07-12-2019_BidVarianceAnalysisDDC.xlsx'
+    # SHEET = 'SampleProject7_07-12-2019_BidVarianceAnalysisDDC.xlsx'
     SHEET = 'SampleProject8_12-21-2017_BidVarianceAnalysisDDC.xlsx'
     data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
                          converters={'RSMeans 12-digit code': lambda x: str(x)}
@@ -86,20 +86,36 @@ def convert_all_files(args):
     assert os.path.isdir(
         args.folder), "folder %s does not exist. You must create it before running the command." % args.folder
     ERRORS = []
+    METADATA_ROWS = []
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
         try:
             logger.info('Processing %s ...' % blob['name'])
             stream = container.download_blob(blob)
             excel_file = io.BytesIO(stream.readall())
+
+            # We load the sheet a first time to extract metaadata.
+            # We only need the first 4 rows (`nrows=4`).
             data = pd.read_excel(excel_file, sheet_name=0,
-                                 header=None, nrows=1).fillna('')
+                                 header=None, nrows=4).fillna('')
             project_id = data[4][0]
             if project_id == '':
                 logger.error('Cannot find project_id for `%s`.' %
                              blob['name'])
                 ERRORS.append(blob['name'])
                 continue
+            bid_date = data[4][1]
+            bid_comparison_date = data[4][2]
+            project_name = data[4][3]
+            ddc_engineer_estimate = None
+            first_bidder = None
+            second_bidder = None
+            third_bidder = None
+
+            METADATA_ROWS.append([project_id, project_name, bid_date,
+                                  bid_comparison_date, ddc_engineer_estimate, first_bidder, second_bidder, third_bidder])
+
+            # We load the sheet a second time to parse the main table.
             data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
                                  converters={
                                      'RSMeans 12-digit code': lambda x: str(x)}
@@ -119,9 +135,17 @@ def convert_all_files(args):
             except Exception:
                 logger.error('Error writing file `%s` to csv' % blob['name'])
                 ERRORS.append(blob['name'])
-        except Exception:
+        except Exception as e:
             logger.error('Problem with file %s.' % blob['name'])
+            logger.error(e)
+            print(e)
             ERRORS.append(blob['name'])
+
+    filename = os.path.join(args.folder, "all_projects.csv")
+    with open(filename, 'w') as csvfile:
+        row_writer = csv.writer(csvfile)
+        for row in METADATA_ROWS:
+            row_writer.writerow(row)
     print('Files that could not be processed: %s.' % ",".join(ERRORS))
 
 
