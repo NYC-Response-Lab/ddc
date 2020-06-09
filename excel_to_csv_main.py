@@ -121,7 +121,8 @@ def convert_all_files(args):
                                      'RSMeans 12-digit code': lambda x: str(x)}
                                  ).fillna('')
 
-            csv_rows = convertor.process_excel_file_as_pd(data, project_id)
+            csv_rows = convertor.process_excel_file_as_pd(
+                data, project_id, project_name)
 
             filename = os.path.join(args.folder, ".".join(
                 blob['name'].split('.')[:-1] + ['csv']))
