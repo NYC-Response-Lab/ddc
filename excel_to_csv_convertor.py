@@ -104,8 +104,13 @@ def generate_csv_row(project_id, project_name, markup, csi_division, csi_sub_div
         pass
 
     try:
-        ddc_avg_unit_price = 1.0/3 * \
-            (_float(bid1_unit_cost) + _float(bid2_unit_cost) + _float(bid3_unit_cost))
+        bids_unit_cost = [_float(bid1_unit_cost), _float(
+            bid2_unit_cost), _float(bid3_unit_cost)]
+        # We handle cases with less than 3 bids as follows:
+        # cost > 0, bid exists, weight set to 1
+        # We sum the weight, which can be 0, 1, 2, or 3.
+        weight = map(lambda x: 1 if x > 0 else 0, bids_unit_cost)
+        ddc_avg_unit_price = sum(bids_unit_cost) / sum(weight)
         logger.info(ddc_avg_unit_price)
     except Exception:
         logger.error('Error computing ddc_avg_unit_price')
