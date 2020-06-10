@@ -145,8 +145,9 @@ def convert_all_files(args):
                     row_writer = csv.writer(csvfile)
                     for row in csv_rows:
                         row_writer.writerow(row)
-            except Exception:
+            except Exception as err_write:
                 logger.error('Error writing file `%s` to csv' % blob['name'])
+                logger.error(err_write)
                 ERRORS.append(blob['name'])
         except Exception as e:
             logger.error('Problem with file %s.' % blob['name'])
