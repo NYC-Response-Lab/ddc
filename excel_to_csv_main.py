@@ -22,6 +22,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--url', type=str)
 subparsers = parser.add_subparsers()
 
+SHEET_NAME = 'DetailComparision(1st 3)'
+
 # Command: test
 
 
@@ -30,10 +32,18 @@ def test(args):
     SHEET = 'ddc-data/SampleProject2_02-17-2017_BidVarianceAnalysisDDC.xlsx'
     # SHEET = 'SampleProject7_07-12-2019_BidVarianceAnalysisDDC.xlsx'
     SHEET = 'SampleProject8_12-21-2017_BidVarianceAnalysisDDC.xlsx'
-    data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
-                         converters={'RSMeans 12-digit code': lambda x: str(x)}
-                         ).fillna('')
-    csv_rows = convertor.process_excel_file_as_pd(data, 'PROJECT_ID')
+    SHHET = 'SampleProject10_09-08-2015_BidVarianceAnalysisDDC.xlsx'
+    # data = pd.read_excel(SHEET, sheet_name=0, skiprows=7,
+    #                     converters = {
+    #                         'RSMeans 12-digit code': lambda x: str(x)}
+    #                     ).fillna('')
+    # csv_rows = convertor.process_excel_file_as_pd(data, 'PROJECT_ID')
+
+    data = pd.read_excel(SHEET, sheet_name=0,
+                         header=None, nrows=4).fillna('')
+    project_id = data[4][0]
+    print(project_id)
+    sys.exit(0)
 
     try:
         with open('test.csv', 'w') as csvfile:
@@ -96,7 +106,7 @@ def convert_all_files(args):
 
             # We load the sheet a first time to extract metaadata.
             # We only need the first 4 rows (`nrows=4`).
-            data = pd.read_excel(excel_file, sheet_name=0,
+            data = pd.read_excel(excel_file, sheet_name=SHEET_NAME,
                                  header=None, nrows=4).fillna('')
             project_id = data[4][0]
             if project_id == '':
@@ -116,7 +126,7 @@ def convert_all_files(args):
                                   bid_comparison_date, ddc_engineer_estimate, first_bidder, second_bidder, third_bidder])
 
             # We load the sheet a second time to parse the main table.
-            data = pd.read_excel(excel_file, sheet_name=0, skiprows=7,
+            data = pd.read_excel(excel_file, sheet_name=SHEET_NAME, skiprows=7,
                                  converters={
                                      'RSMeans 12-digit code': lambda x: str(x)}
                                  ).fillna('')
