@@ -99,8 +99,8 @@ def convert_all_files(args):
     METADATA_ROWS = []
     container = ContainerClient.from_container_url(args.url)
     for blob in container.list_blobs():
-        if blob['name'] != "SampleProject11_07-12-2019_BidVarianceAnalysisDDC.xlsx":
-            continue
+        # if blob['name'] != "SampleProject11_07-12-2019_BidVarianceAnalysisDDC.xlsx":
+        #    continue
         try:
             logger.info('Processing %s ...' % blob['name'])
             stream = container.download_blob(blob)
